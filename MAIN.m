@@ -13,7 +13,7 @@ addpath('StochasticGalerkinScripts')
 
 
 % GSEResultsGenerate;
-Sylvester_StochasticGalerkin1;
+% Sylvester_StochasticGalerkin1;
 Sylvester_StochasticGalerkin2;
 
 

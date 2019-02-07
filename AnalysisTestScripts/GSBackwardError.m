@@ -9,6 +9,8 @@ function [CouExCnumber] = GSBackwardError(siv,cnv,ns,flag)
 
 sv = [1:1:ns]';
 dv = zeros(length(sv),1);
+msz = 500;
+msz1 = 30;
 for i=1:length(sv)
     rng(sv(i,1))
     n = siv;
@@ -86,15 +88,15 @@ if (flag == 1)
     
     %%%% Scatter plots of backward errors
     figure
-    scatter(sv,abe,150,'d');
+    scatter(sv,abe,msz,'d');
     hold on
-    scatter(sv,nbe,150,'p');
+    scatter(sv,nbe,msz,'o');
     set(gca, 'YScale', 'log')
     set(gca,'FontSize',40)
     xlabel('Seed')
     [~, objh] = legend('actual backward error','relative residual');
     objhl = findobj(objh, 'type', 'patch'); %// objects of legend of type line
-    set(objhl, 'Markersize', 20); %// set marker size as desired
+    set(objhl, 'Markersize', msz1); %// set marker size as desired
     
     
     str_e1 = sprintf('%0.1e',cnv(1,1));
@@ -111,7 +113,7 @@ if (flag == 1)
     
     %%%% Scatter plot of condition number of the solution matrix
     figure;
-    scatter(sv,cnsol,150,'d');
+    scatter(sv,cnsol,msz,'d');
     set(gca, 'YScale', 'log')
     set(gca,'FontSize',40)
     xlabel('Seed')
@@ -124,9 +126,9 @@ if (flag == 1)
     
     %%%% Scatter plot of the condition number
     figure;
-    scatter(sv((1:100),1),Cnumber((1:100),1),150,'d');
+    scatter(sv((1:30),1),Cnumber((1:30),1),msz,'d');
     hold on
-    scatter(sv((1:100),1),Cnumber((1:100),2),150,'p');
+    scatter(sv((1:30),1),Cnumber((1:30),2),msz,'o');
     set(gca, 'YScale', 'log')
     set(gca,'FontSize',40)
     xlabel('Seed')
@@ -137,7 +139,7 @@ if (flag == 1)
     
     [~, objh] = legend('strong condition number','weak condition number');
     objhl = findobj(objh, 'type', 'patch'); %// objects of legend of type line
-    set(objhl, 'Markersize', 20); %// set marker size as desired
+    set(objhl, 'Markersize', msz1); %// set marker size as desired
     
     % t1 = sprintf('MatCondition_%d',pn);
     % hgexport(gcf, t1, hgexport('factorystyle'), 'Format', 'epsc')
