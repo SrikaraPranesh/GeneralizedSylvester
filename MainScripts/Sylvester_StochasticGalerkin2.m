@@ -180,15 +180,15 @@ for jj = 1:2
         denom = 0;
         for i=1:rv_dom
             T1 = norm(K{i,1},'fro')*kron((X*G{i,1})',eye(l1));
-            T2 = norm(G{i,1},'fro')*kron(eye(l2),(K{i,1}*X));
+%             T2 = norm(G{i,1},'fro')*kron(eye(l2),(K{i,1}*X));
             H1 = [H1 T1];
-            H2 = [H2 T2];
+%             H2 = [H2 T2];
             denom = denom + (2*(norm(K{i,1},'fro')*norm(G{i,1},'fro')));
         end
         denom = (denom*norm(X,'fro')) + norm(F,'fro');
         
         T = norm(F,'fro')*eye((l1*l2));
-        H=[H1 H2 -T];
+        H=[H1 -T];
 %         pH = pinv(H);
         rs = (norm(r)/denom);
         denom1 = sqrt((((norm(K{1,1},'fro')/norm(inv(G{1,1}),'fro'))*min(svd(X)))^2)+...
@@ -211,7 +211,7 @@ for jj = 1:2
         
         denom11 = (norm(P)*norm(X,'fro')) + norm(F,'fro');
         rs1 = (norm(r)/denom11); 
-        rqtys{jj,1}(ii,:) = [norm(H\r) (mu*rs) rs1];
+        rqtys{jj,1}(ii,:) = [norm(H\r,'inf') (mu*rs) rs1];
         cnumbers{jj,1}(ii,:) = [Psi Phi lconum];
         
         fprintf('In %d case out of 5 cases \n',ii);
