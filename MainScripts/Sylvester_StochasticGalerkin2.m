@@ -11,6 +11,8 @@
 %       Karhunen–Loève expansion using its domain independence property."
 %       Computer Methods in Applied Mechanics and Engineering 285 (2015):
 %       125-145.
+%
+% Codes in https://github.com/ezander/sglib must be in MATLAB path.
 
 clear all
 close all
@@ -177,19 +179,21 @@ for jj = 1:2
         l2=length(G{1,1});
         r=reshape(r,(l1*l2),1);
         H1 = []; H2 = [];
-        denom = 0;
+        denom = 0; dd = 0;
         for i=1:rv_dom
             T1 = norm(K{i,1},'fro')*kron((X*G{i,1})',eye(l1));
-%             T2 = norm(G{i,1},'fro')*kron(eye(l2),(K{i,1}*X));
+            T2 = norm(G{i,1},'fro')*kron(eye(l2),(K{i,1}*X));
             H1 = [H1 T1];
-%             H2 = [H2 T2];
-            denom = denom + (2*(norm(K{i,1},'fro')*norm(G{i,1},'fro')));
+            H2 = [H2 T2];
+            denom = denom + ((norm(K{i,1},'fro')*norm(G{i,1},'fro')));
+            dd = dd + (2*(norm(K{i,1},'fro')*norm(G{i,1},'fro')));
         end
         denom = (denom*norm(X,'fro')) + norm(F,'fro');
+        dd = (dd*norm(X,'fro')) + norm(F,'fro');
         
         T = norm(F,'fro')*eye((l1*l2));
         H=[H1 -T];
-%         pH = pinv(H);
+        Hcond = [H1 H2 -T];
         rs = (norm(r)/denom);
         denom1 = sqrt((((norm(K{1,1},'fro')/norm(inv(G{1,1}),'fro'))*min(svd(X)))^2)+...
             norm(F,'fro')^2);
@@ -201,13 +205,14 @@ for jj = 1:2
         for i = 1:rv_dom
             P = P+kron(G{i,1}',K{i,1});
         end
-        Psi = sqrt((2*rv_dom)+1)*(norm(P\H)/norm(X,'fro'));
+        Psi = sqrt((2*rv_dom)+1)*(norm(P\Hcond)/norm(X,'fro'));
         nip = min(eig(P));
         if (nip < 0)
            error('matrix is not symmetric and positive definite'); 
         end
-        Phi = sqrt((2*rv_dom)+1)*(1/nip)*(denom/norm(X,'fro'));
-        lconum = cond(P) +(((1/nip)*norm(F,'fro'))/norm(X,'fro'));
+        Phi = sqrt((2*rv_dom)+1)*(1/nip)*(dd/norm(X,'fro'));
+        iPf = norm(inv(P),'fro');
+        lconum = (norm(P,'fro')*iPf) +((iPf*norm(F,'fro'))/norm(X,'fro'));
         
         denom11 = (norm(P)*norm(X,'fro')) + norm(F,'fro');
         rs1 = (norm(r)/denom11); 

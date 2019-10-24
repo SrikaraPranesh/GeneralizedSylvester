@@ -11,6 +11,8 @@
 %       Karhunen–Loève expansion using its domain independence property."
 %       Computer Methods in Applied Mechanics and Engineering 285 (2015):
 %       125-145.
+%
+% Codes in https://github.com/ezander/sglib must be in MATLAB path.
 
 clear all
 close all
@@ -19,7 +21,7 @@ close all
 fid=fopen('main.msh');
 
 % Converts FE mesh file to MATLAB readable format
-[elems,nodelist] = mesh_node(fid,0); % change to 1 for FE mesh plot
+[elems,nodelist] = mesh_node(fid,0); % change 0 to 1 for FE mesh plot
 
 % amplitude of uniformly applied force
 q = 1;
@@ -47,8 +49,8 @@ gp_d = gppe(elems,nodelist);
 [evec_gp,eigvals] = KL_DI(X1,Y1,X2,Y2,n1,n2,gp_d,mean_k,var_k,lc);
 
 %%%%
-cnts = [2 2;3 2;4 2;2 3;3 3];
-rvc = {'H','P'};
+cnts = [2 2;3 2;4 2;2 3;3 3]; %(stochastic dimensionality, chaos order)
+rvc = {'H','P'}; % H -- Hermite, P -- Legendre
 save init_data
 %%% Generation of polynomial chaos data %%%%
 for jj = 1:2
@@ -114,13 +116,13 @@ for jj = 1:2
         
         K = cell((norand+1),1);
         for i = 1:(norand+1)
-            K{i,1} = matcut(K_m1{i,1},DD);
+            K{i,1} = matcut(K_m1{i,1},DD); % apply boundary condition to K
         end
         
         clear K_m1
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        F2=veccut(F_loc,DD);
+        F2=veccut(F_loc,DD); % apply boundary condition to F
         sr=length(F2);
         F=zeros(sr,pp);
         F(:,1)=F2;
@@ -142,7 +144,7 @@ for jj = 1:2
         f_norm=rsold;
         %%%
         
-        for i=1:(sk(1,1)*sg(1,1))          % I will have to check what is the actual number I must give here
+        for i=1:(sk(1,1)*sg(1,1))         
             Ap=GSylvester_MATVEC(K,G,rv_dom,p);
             denom=Mat_Frobenius_ip(r,z);
             alpha=denom/Mat_Frobenius_ip(Ap,p);
@@ -177,20 +179,21 @@ for jj = 1:2
         l2=length(G{1,1});
         r=reshape(r,(l1*l2),1);
         H1 = []; H2 = [];
-        denom = 0;
+        denom = 0; dd = 0;
         for i=1:rv_dom
             T1 = norm(K{i,1},'fro')*kron((X*G{i,1})',eye(l1));
-%             T2 = norm(G{i,1},'fro')*kron(eye(l2),(K{i,1}*X));
+            T2 = norm(G{i,1},'fro')*kron(eye(l2),(K{i,1}*X));
             H1 = [H1 T1];
-%             H2 = [H2 T2];
-            denom = denom + (2*(norm(K{i,1},'fro')*norm(G{i,1},'fro')));
+            H2 = [H2 T2];
+            denom = denom + ((norm(K{i,1},'fro')*norm(G{i,1},'fro')));
+            dd = dd + (2*(norm(K{i,1},'fro')*norm(G{i,1},'fro')));
         end
         denom = (denom*norm(X,'fro')) + norm(F,'fro');
+        dd = (dd*norm(X,'fro')) + norm(F,'fro');
         
         T = norm(F,'fro')*eye((l1*l2));
         H=[H1 -T];
-%         keyboard
-%         pH = pinv(H);
+        Hcond = [H1 H2 -T];
         rs = (norm(r)/denom);
         denom1 = sqrt((((norm(K{1,1},'fro')/norm(inv(G{1,1}),'fro'))*min(svd(X)))^2)+...
             norm(F,'fro')^2);
@@ -202,13 +205,14 @@ for jj = 1:2
         for i = 1:rv_dom
             P = P+kron(G{i,1}',K{i,1});
         end
-        Psi = sqrt((2*rv_dom)+1)*(norm(P\H)/norm(X,'fro'));
+        Psi = sqrt((2*rv_dom)+1)*(norm(P\Hcond)/norm(X,'fro'));
         nip = min(eig(P));
         if (nip < 0)
            error('matrix is not symmetric and positive definite'); 
         end
-        Phi = sqrt((2*rv_dom)+1)*(1/nip)*(denom/norm(X,'fro'));
-        lconum = cond(P) +(((1/nip)*norm(F,'fro'))/norm(X,'fro'));
+        Phi = sqrt((2*rv_dom)+1)*(1/nip)*(dd/norm(X,'fro'));
+        iPf = norm(inv(P),'fro');
+        lconum = (norm(P,'fro')*iPf) +((iPf*norm(F,'fro'))/norm(X,'fro'));
         
         denom11 = (norm(P)*norm(X,'fro')) + norm(F,'fro');
         rs1 = (norm(r)/denom11); 
@@ -229,7 +233,7 @@ fprintf(fid1,'Columns 6, 7 and 8 are for Legendre Polynomials \n');
 fprintf(fid1,'\n'); fprintf(fid1,'\n');
 for i = 1:5
     t0 = pp1{1,1}(i,1);
-    t1  =  cnts(i,1); t2 = cnts(i,2);
+    t1  =  cnts(i,1)+1; t2 = cnts(i,2);
     t11  = rqtys{1,1}(i,1); t22 = rqtys{1,1}(i,2);
     t3  =  rqtys{1,1}(i,3); t4 = rqtys{2,1}(i,1);
     t33  =  rqtys{2,1}(i,2); t44 = rqtys{2,1}(i,3);
@@ -244,7 +248,7 @@ fprintf(fid1,'Columns 3, 4 and 5 are for Hermite Polynomials \n');
 fprintf(fid1,'Columns 6, 7 and 8 are for Legendre Polynomials \n');
 for i = 1:5
     t0 = pp1{1,1}(i,1);
-    t1  =  cnts(i,1); t2 = cnts(i,2);
+    t1  =  cnts(i,1)+1; t2 = cnts(i,2);
     t11  = cnumbers{1,1}(i,1); t22 = cnumbers{1,1}(i,2);
     t3  =  cnumbers{1,1}(i,3); t4 = cnumbers{2,1}(i,1);
     t33  =  cnumbers{2,1}(i,2); t44 = cnumbers{2,1}(i,3);
