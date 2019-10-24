@@ -1,0 +1,5 @@
+Column 1 is seed used to generate the matrix 
+Columns 2 is the actual condition number 
+Column 3 is the condition number corresponding to linear systems 
+
+
